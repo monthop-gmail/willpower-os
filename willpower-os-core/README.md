@@ -11,6 +11,9 @@
 - **User Management:** ระบบ Willpower ID (Line Login + Supabase Auth)
 - **Meditation Tracking:** บันทึกนาทีนั่งสมาธิ/เดินจงกรม
 - **Branch Management:** จัดการข้อมูลสาขาทั่วประเทศ
+- **Curriculum Management:** จัดการหลักสูตร (ชินสาสมาธิ, ครูสมาธิ, วิทันตสาสมาธิ) และ mapping บทเรียน
+- **Teaching Materials:** จัดการชุดสื่อการสอนสำหรับอาจารย์ผู้บรรยาย (แยกตามหลักสูตร)
+- **Lecture Tapes:** จัดเก็บเทปบรรยายประจำบท พร้อมระบบ versioning
 - **API Gateway:** จุดเชื่อมต่อกลางสำหรับทุก Service
 
 ---
@@ -37,7 +40,10 @@ willpower-os-core/
 │   │   ├── api/
 │   │   │   ├── users/        ← User endpoints
 │   │   │   ├── logs/         ← Meditation log endpoints
-│   │   │   └── branches/     ← Branch endpoints
+│   │   │   ├── branches/     ← Branch endpoints
+│   │   │   ├── courses/      ← Course & curriculum endpoints
+│   │   │   ├── materials/    ← Teaching materials endpoints
+│   │   │   └── tapes/        ← Lecture tape endpoints
 │   │   ├── layout.tsx
 │   │   └── page.tsx
 │   ├── lib/
@@ -102,6 +108,10 @@ npm run dev
 | `POST` | `/api/v1/logs/meditation` | บันทึกการปฏิบัติสมาธิ |
 | `GET` | `/api/v1/branches` | รายชื่อสาขาทั้งหมด |
 | `GET` | `/api/v1/branches/{id}` | รายละเอียดสาขา |
+| `GET` | `/api/v1/courses` | รายชื่อหลักสูตรทั้งหมด |
+| `GET` | `/api/v1/courses/{id}/chapters` | บทเรียนในหลักสูตร (พร้อมลำดับการสอน) |
+| `GET` | `/api/v1/courses/{id}/materials` | ชุดสื่อการสอนของหลักสูตร |
+| `GET` | `/api/v1/tapes/{book}/{chapter}` | เทปบรรยายประจำบท (ทุก version) |
 
 ดู Spec เต็มที่ `core_api_spec.yaml`
 

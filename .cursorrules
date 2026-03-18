@@ -10,7 +10,7 @@
 
 # ----- AI PERSONALITY -----
 # - Tone of Voice: สำรวม, นอบน้อม, เมตตา
-# - อ้างอิงตำราเล่ม 1-3 ของหลักสูตรสมาธิเท่านั้น
+# - อ้างอิงตำราเล่ม 1-3 และเทปบรรยายประจำบทเท่านั้น
 # - ห้ามเดาคำตอบเรื่องธรรมะ/สภาวะธรรม (No Hallucination)
 # - หากไม่แน่ใจ ให้แนะนำปรึกษา "อาจารย์วิทยากร" เสมอ
 
@@ -24,8 +24,8 @@
 
 # ----- ARCHITECTURE -----
 # Micro-repositories:
-#   willpower-os-core  → User, Auth, Branch, Meditation Logs, API Gateway
-#   willpower-os-ai    → RAG Engine, Embedding, Prompt Mgmt, Transcription
+#   willpower-os-core  → User, Auth, Branch, Meditation Logs, Courses, Teaching Materials, API Gateway
+#   willpower-os-ai    → RAG Engine, Embedding, Prompt Mgmt, Lecture Tape Processing, Transcription
 # ทุก API ต้องสื่อสารผ่าน JSON API Spec ที่กำหนดไว้เท่านั้น
 
 # ----- CODING STANDARDS -----
@@ -37,14 +37,29 @@
 # อัปเดต docs/ ทุกครั้งที่แก้ไข API
 
 # ----- DATABASE TABLES (ห้ามแก้โครงสร้างโดยไม่ผ่าน Review) -----
-# users           → id, line_id, branch_id, student_status, role, created_at
-# meditation_logs → id, user_id, type(sitting/walking), duration_minutes, logged_at
-# branches        → id, name, region, address, is_active
+#
+# --- Core Tables ---
+# users              → id, line_id, display_name, branch_id, student_status, role, course_level, pdpa_consent
+# meditation_logs    → id, user_id, type(sitting/walking), duration_minutes, session_date, note
+# branches           → id, name, region, address, is_active
+# ai_feedback        → id, user_id, question, answer, rating(1/-1), comment
+#
+# --- Curriculum Tables ---
+# courses            → id, code(CHIN1/CHIN2/KRU/WITAN), name, description, target_audience
+# course_chapters    → id, course_id, book_number, chapter_number, sort_order, is_required
+# teaching_materials → id, course_id, course_chapter_id, type(slide/handout/video/audio/guide/exercise), title, file_url, version
+#
+# --- Content & AI Tables ---
+# lecture_tapes      → id, book_number, chapter_number, tape_code, title, version, is_latest, transcription, duration_seconds
+# lesson_embeddings  → id, source_type(textbook/lecture_tape), book_number, chapter_number, page_number, tape_id, content, embedding(768)
+#
+# --- RPC Functions ---
+# match_lessons(query_embedding, match_threshold, match_count) → Vector similarity search
 
 # ----- AI GUARDRAILS -----
-# 1. ห้ามตอบคำถามธรรมะที่ไม่มีในตำราเล่ม 1-3
+# 1. ห้ามตอบคำถามธรรมะที่ไม่มีในตำราเล่ม 1-3 หรือเทปบรรยาย
 # 2. ห้ามวินิจฉัยสภาวะธรรมเชิงลึก — ให้แนะนำปรึกษาอาจารย์
-# 3. ทุกคำตอบต้องมี source reference (เล่มที่/บทที่/หน้าที่)
+# 3. ทุกคำตอบต้องมี source reference: ตำรา(เล่ม/บท/หน้า) หรือ เทป(รหัส/version)
 # 4. ห้ามสร้างเนื้อหาธรรมะใหม่ที่ไม่มีในแหล่งอ้างอิง
 # 5. ห้ามเปรียบเทียบคำสอนกับสำนักอื่น
 

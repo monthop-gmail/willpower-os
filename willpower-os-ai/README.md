@@ -8,8 +8,9 @@
 ## 📋 ภาพรวม
 
 `willpower-os-ai` คือ AI Backend ที่ทำหน้าที่:
-- **RAG Engine:** ค้นหาคำตอบจากตำราหลักสูตรสมาธิเล่ม 1-3 ด้วย Vector Search
-- **Embedding Pipeline:** แปลงบทเรียนเป็น Vector เก็บใน pgvector
+- **RAG Engine:** ค้นหาคำตอบจากตำราเล่ม 1-3 และเทปบรรยายด้วย Vector Search (แยก source_type: textbook/lecture_tape)
+- **Embedding Pipeline:** แปลงเนื้อหาตำราและ transcription เทปบรรยายเป็น Vector เก็บใน pgvector
+- **Lecture Tape Processing:** ประมวลผล transcription จากเทปบรรยาย รองรับหลาย version
 - **Prompt Management:** จัดการ System Prompt ให้ AI มีบุคลิกสำรวม นอบน้อม
 - **Feedback System:** เก็บ 👍/👎 เพื่อปรับปรุงคุณภาพคำตอบ
 
@@ -43,7 +44,7 @@ willpower-os-ai/
 │   │   └── gemini_client.py   ← Gemini API wrapper
 │   └── config.py              ← Settings & env vars
 ├── ai_system_prompt.txt        ← System prompt สำหรับ AI
-├── embedding_script.py         ← Script ทำ Embedding ข้อมูลตำรา
+├── embedding_script.py         ← Script ทำ Embedding ข้อมูลตำรา + เทปบรรยาย
 ├── ai_api_spec.yaml            ← OpenAPI spec
 ├── requirements.txt            ← Python dependencies
 ├── docs/                       ← Documentation
@@ -112,9 +113,11 @@ uvicorn src.main:app --reload --port 8000
 
 ## 🛡️ AI Guardrails
 
-1. ห้ามเดาคำตอบธรรมะ — ใช้ RAG ดึงจากตำราเท่านั้น
+1. ห้ามเดาคำตอบธรรมะ — ใช้ RAG ดึงจากตำราและเทปบรรยายเท่านั้น
 2. ห้ามวินิจฉัยสภาวะธรรม — แนะนำปรึกษาอาจารย์วิทยากร
-3. ทุกคำตอบต้องมี Reference (เล่ม/บท/หน้า)
+3. ทุกคำตอบต้องระบุ source_type + Reference:
+   - จากตำรา: `[อ้างอิง: ตำราเล่ม X, บทที่ Y, หน้า Z]`
+   - จากเทปบรรยาย: `[อ้างอิง: เทปบรรยาย เล่ม X, บทที่ Y, รหัส T-XX (v.N)]`
 4. ห้ามสร้างเนื้อหาธรรมะใหม่
 5. ห้ามเปรียบเทียบกับสำนักอื่น
 
