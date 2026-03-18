@@ -1,0 +1,304 @@
+openapi: "3.0.3"
+info:
+  title: Willpower OS Core API
+  description: |
+    API หลักของระบบ Willpower OS สำหรับจัดการ User, Meditation Logs และ Branch Data
+    สถาบันพลังจิตตานุภาพ (Willpower Institute)
+  version: "1.0.0"
+  contact:
+    name: คณะอนุกรรมการ IT สถาบันพลังจิตตานุภาพ
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development
+  - url: https://willpower-os.vercel.app/api/v1
+    description: Production
+
+tags:
+  - name: Users
+    description: จัดการข้อมูลผู้ใช้ / นักศึกษาครูสมาธิ
+  - name: Meditation Logs
+    description: บันทึกและดึงข้อมูลการปฏิบัติสมาธิ
+  - name: Branches
+    description: ข้อมูลสาขาทั่วประเทศ
+
+paths:
+  /users/{id}/status:
+    get:
+      tags: [Users]
+      summary: ดึงสถานะผู้ใช้
+      description: ดึงข้อมูลสถานะผู้ใช้ รวมถึงสถิติการปฏิบัติสมาธิสะสม
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User UUID
+      responses:
+        "200":
+          description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      display_name:
+                        type: string
+                        example: "สมชาย ใจดี"
+                      branch_name:
+                        type: string
+                        example: "สาขา 1 วัดธรรมมงคล"
+                      student_status:
+                        type: string
+                        enum: [enrolled, graduated, instructor]
+                        example: "enrolled"
+                      role:
+                        type: string
+                        enum: [student, mentor, instructor, admin]
+                        example: "student"
+                      course_level:
+                        type: integer
+                        example: 1
+                      total_meditation_minutes:
+                        type: integer
+                        example: 1500
+                        description: นาทีสมาธิสะสมทั้งหมด
+                      current_month_minutes:
+                        type: integer
+                        example: 120
+                        description: นาทีสมาธิเดือนนี้
+                  error:
+                    type: "null"
+                  metadata:
+                    $ref: "#/components/schemas/Metadata"
+        "404":
+          description: ไม่พบผู้ใช้
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /logs/meditation:
+    post:
+      tags: [Meditation Logs]
+      summary: บันทึกการปฏิบัติสมาธิ
+      description: บันทึกนาทีนั่งสมาธิหรือเดินจงกรม
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - type
+                - duration_minutes
+                - session_date
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                type:
+                  type: string
+                  enum: [sitting, walking]
+                  description: "sitting = นั่งสมาธิ, walking = เดินจงกรม"
+                duration_minutes:
+                  type: integer
+                  minimum: 1
+                  example: 30
+                session_date:
+                  type: string
+                  format: date
+                  example: "2026-03-18"
+                note:
+                  type: string
+                  description: บันทึกสภาวะ (optional)
+                  example: "จิตสงบดี มีสมาธิต่อเนื่อง"
+      responses:
+        "201":
+          description: บันทึกสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      message:
+                        type: string
+                        example: "บันทึกการปฏิบัติสมาธิเรียบร้อยแล้ว"
+                      total_minutes:
+                        type: integer
+                        example: 1530
+                        description: นาทีสะสมทั้งหมดหลังบันทึก
+                  error:
+                    type: "null"
+                  metadata:
+                    $ref: "#/components/schemas/Metadata"
+        "400":
+          description: ข้อมูลไม่ถูกต้อง
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /branches:
+    get:
+      tags: [Branches]
+      summary: รายชื่อสาขาทั้งหมด
+      description: ดึงรายชื่อสาขาที่เปิดใช้งาน
+      parameters:
+        - name: region
+          in: query
+          required: false
+          schema:
+            type: string
+          description: กรองตามภูมิภาค
+      responses:
+        "200":
+          description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                          example: "สาขา 1 วัดธรรมมงคล"
+                        region:
+                          type: string
+                          example: "กรุงเทพฯ"
+                        address:
+                          type: string
+                        is_active:
+                          type: boolean
+                  error:
+                    type: "null"
+                  metadata:
+                    $ref: "#/components/schemas/Metadata"
+
+  /branches/{id}:
+    get:
+      tags: [Branches]
+      summary: รายละเอียดสาขา
+      description: ดึงข้อมูลสาขาพร้อมสถิติ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      region:
+                        type: string
+                      address:
+                        type: string
+                      is_active:
+                        type: boolean
+                      total_students:
+                        type: integer
+                        description: จำนวนนักศึกษาในสาขา
+                      total_meditation_minutes:
+                        type: integer
+                        description: นาทีสมาธิสะสมทั้งสาขา
+                  error:
+                    type: "null"
+                  metadata:
+                    $ref: "#/components/schemas/Metadata"
+        "404":
+          description: ไม่พบสาขา
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    Metadata:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-03-18T10:00:00Z"
+        version:
+          type: string
+          example: "1.0.0"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          type: "null"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "NOT_FOUND"
+            message:
+              type: string
+              example: "ไม่พบข้อมูลที่ร้องขอ"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT Token
+
+security:
+  - BearerAuth: []

@@ -1,0 +1,55 @@
+# ======================================================
+# 🪷 Willpower OS — Cursor Rules (ธรรมนูญดิจิทัล)
+# สถาบันพลังจิตตานุภาพ (Willpower Institute)
+# ======================================================
+
+# ----- SYSTEM IDENTITY -----
+# นี่คือโครงการ "Willpower OS" ระบบปฏิบัติการดิจิทัลอัจฉริยะ
+# เพื่อเผยแผ่คำสอนสมาธิของพระธรรมมงคลญาณ (หลวงพ่อวิริยังค์ สิรินฺธโร)
+# ทุกการพัฒนาต้องยึดหลัก: ความถูกต้องของคำสอน 100%
+
+# ----- AI PERSONALITY -----
+# - Tone of Voice: สำรวม, นอบน้อม, เมตตา
+# - อ้างอิงตำราเล่ม 1-3 ของหลักสูตรสมาธิเท่านั้น
+# - ห้ามเดาคำตอบเรื่องธรรมะ/สภาวะธรรม (No Hallucination)
+# - หากไม่แน่ใจ ให้แนะนำปรึกษา "อาจารย์วิทยากร" เสมอ
+
+# ----- TECH STACK (ห้ามเปลี่ยนโดยไม่ได้รับอนุมัติ) -----
+# Frontend  : Next.js (App Router)
+# Backend   : FastAPI (Python) / Node.js
+# Database  : Supabase (PostgreSQL + pgvector)
+# AI Model  : Google Gemini 1.5 (Pro/Flash)
+# Auth      : Supabase Auth + Line Login
+# Hosting   : Vercel (Frontend) / Cloud Run (Backend)
+
+# ----- ARCHITECTURE -----
+# Micro-repositories:
+#   willpower-os-core  → User, Auth, Branch, Meditation Logs, API Gateway
+#   willpower-os-ai    → RAG Engine, Embedding, Prompt Mgmt, Transcription
+# ทุก API ต้องสื่อสารผ่าน JSON API Spec ที่กำหนดไว้เท่านั้น
+
+# ----- CODING STANDARDS -----
+# JavaScript/TypeScript: camelCase
+# Python: snake_case
+# ทุก Function ต้องมี Comment อธิบาย
+# ห้าม Hard-code API Keys — ใช้ Environment Variables เท่านั้น
+# ต้องปฏิบัติตามกฎ PDPA อย่างเคร่งครัด
+# อัปเดต docs/ ทุกครั้งที่แก้ไข API
+
+# ----- DATABASE TABLES (ห้ามแก้โครงสร้างโดยไม่ผ่าน Review) -----
+# users           → id, line_id, branch_id, student_status, role, created_at
+# meditation_logs → id, user_id, type(sitting/walking), duration_minutes, logged_at
+# branches        → id, name, region, address, is_active
+
+# ----- AI GUARDRAILS -----
+# 1. ห้ามตอบคำถามธรรมะที่ไม่มีในตำราเล่ม 1-3
+# 2. ห้ามวินิจฉัยสภาวะธรรมเชิงลึก — ให้แนะนำปรึกษาอาจารย์
+# 3. ทุกคำตอบต้องมี source reference (เล่มที่/บทที่/หน้าที่)
+# 4. ห้ามสร้างเนื้อหาธรรมะใหม่ที่ไม่มีในแหล่งอ้างอิง
+# 5. ห้ามเปรียบเทียบคำสอนกับสำนักอื่น
+
+# ----- SECURITY -----
+# - ใช้ .env สำหรับทุก Secret/API Key
+# - ข้อมูลส่วนบุคคลต้องเข้ารหัส (Encryption at rest)
+# - ปฏิบัติตาม PDPA: ต้องมี Consent ก่อนเก็บข้อมูล
+# - ห้าม Log ข้อมูลส่วนบุคคลใน Console/Debug
