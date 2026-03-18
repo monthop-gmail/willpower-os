@@ -165,6 +165,118 @@ CREATE TRIGGER trigger_branches_updated_at
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- =====================================================
+-- ENUM: source_type (แหล่งที่มาของเนื้อหา)
+-- =====================================================
+
+CREATE TYPE source_type AS ENUM (
+    'textbook',         -- ตำราหลักสูตร
+    'lecture_tape'      -- เทปบรรยาย
+);
+
+-- =====================================================
+-- Table: lecture_tapes (เทปบรรยายประจำบท)
+-- 1 บท = 1 ม้วนหลัก แต่อาจมีหลาย version (ปรับปรุง)
+-- =====================================================
+
+CREATE TABLE lecture_tapes (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    book_number     INTEGER NOT NULL CHECK (book_number BETWEEN 1 AND 3),  -- เล่มที่ 1-3
+    chapter_number  INTEGER NOT NULL,               -- บทที่
+    tape_code       VARCHAR(50),                    -- รหัสม้วนเทป เช่น "T1-01"
+    title           VARCHAR(500) NOT NULL,           -- ชื่อเทป/หัวข้อบรรยาย
+    version         INTEGER NOT NULL DEFAULT 1,      -- version (1 = ต้นฉบับ, 2+ = ปรับปรุง)
+    is_latest       BOOLEAN DEFAULT true,            -- เป็น version ล่าสุดหรือไม่
+    transcription   TEXT,                            -- เนื้อหาถอดเสียง (transcription)
+    duration_seconds INTEGER,                        -- ความยาวเทป (วินาที)
+    recorded_date   DATE,                            -- วันที่บรรยาย
+    lecturer        VARCHAR(255) DEFAULT 'หลวงพ่อวิริยังค์ สิรินฺธโร',
+    notes           TEXT,                            -- หมายเหตุการปรับปรุง
+    metadata        JSONB,                           -- ข้อมูลเพิ่มเติม (audio_url, format ฯลฯ)
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_lecture_tapes_book_chapter ON lecture_tapes(book_number, chapter_number);
+CREATE INDEX idx_lecture_tapes_latest ON lecture_tapes(book_number, chapter_number) WHERE is_latest = true;
+CREATE INDEX idx_lecture_tapes_tape_code ON lecture_tapes(tape_code);
+
+CREATE TRIGGER trigger_lecture_tapes_updated_at
+    BEFORE UPDATE ON lecture_tapes
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- =====================================================
+-- Table: lesson_embeddings (เก็บ Vector ของบทเรียน)
+-- รองรับทั้งตำราและเทปบรรยาย
+-- =====================================================
+
+CREATE TABLE lesson_embeddings (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    source_type     source_type NOT NULL DEFAULT 'textbook',  -- ตำรา หรือ เทปบรรยาย
+    book_number     INTEGER NOT NULL CHECK (book_number BETWEEN 1 AND 3),
+    chapter_number  INTEGER NOT NULL,
+    page_number     INTEGER,                        -- หน้าที่ (สำหรับ textbook)
+    tape_id         UUID REFERENCES lecture_tapes(id),  -- อ้างอิงเทป (สำหรับ lecture_tape)
+    title           VARCHAR(500),
+    content         TEXT NOT NULL,                   -- เนื้อหา chunk
+    embedding       VECTOR(768),                    -- Gemini embedding vector
+    metadata        JSONB,                          -- chunk_index, total_chunks, source, timestamp_start/end
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index สำหรับ Vector Similarity Search (IVFFlat)
+CREATE INDEX idx_lesson_embeddings_embedding
+    ON lesson_embeddings
+    USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 100);
+
+CREATE INDEX idx_lesson_embeddings_book ON lesson_embeddings(book_number);
+CREATE INDEX idx_lesson_embeddings_chapter ON lesson_embeddings(book_number, chapter_number);
+CREATE INDEX idx_lesson_embeddings_source ON lesson_embeddings(source_type);
+CREATE INDEX idx_lesson_embeddings_tape ON lesson_embeddings(tape_id) WHERE tape_id IS NOT NULL;
+
+-- =====================================================
+-- RPC Function: match_lessons (Vector Similarity Search)
+-- คืนผลลัพธ์พร้อมระบุว่ามาจากตำราหรือเทปบรรยาย
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION match_lessons(
+    query_embedding VECTOR(768),
+    match_threshold FLOAT DEFAULT 0.7,
+    match_count INT DEFAULT 5
+)
+RETURNS TABLE (
+    id              UUID,
+    source_type     source_type,
+    book_number     INTEGER,
+    chapter_number  INTEGER,
+    page_number     INTEGER,
+    tape_id         UUID,
+    title           VARCHAR(500),
+    content         TEXT,
+    similarity      FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        le.id,
+        le.source_type,
+        le.book_number,
+        le.chapter_number,
+        le.page_number,
+        le.tape_id,
+        le.title,
+        le.content,
+        1 - (le.embedding <=> query_embedding) AS similarity
+    FROM lesson_embeddings le
+    WHERE 1 - (le.embedding <=> query_embedding) > match_threshold
+    ORDER BY le.embedding <=> query_embedding
+    LIMIT match_count;
+END;
+$$;
+
+-- =====================================================
 -- Seed Data: ตัวอย่างสาขา
 -- =====================================================
 

@@ -72,10 +72,15 @@ paths:
                         example: "การทำสมาธิเบื้องต้น ให้เริ่มจากการนั่งขัดสมาธิ หลับตาเบาๆ กำหนดลมหายใจเข้าออก พร้อมบริกรรมภาวนาว่า 'สัมมา อะระหัง' ครับ"
                       sources:
                         type: array
-                        description: แหล่งอ้างอิง
+                        description: แหล่งอ้างอิง (ตำราหรือเทปบรรยาย)
                         items:
                           type: object
                           properties:
+                            source_type:
+                              type: string
+                              enum: [textbook, lecture_tape]
+                              description: "textbook = ตำรา, lecture_tape = เทปบรรยาย"
+                              example: "textbook"
                             book_number:
                               type: integer
                               example: 1
@@ -84,7 +89,19 @@ paths:
                               example: 3
                             page_number:
                               type: integer
+                              nullable: true
+                              description: หน้าที่ (เฉพาะ textbook)
                               example: 45
+                            tape_code:
+                              type: string
+                              nullable: true
+                              description: รหัสม้วนเทป (เฉพาะ lecture_tape)
+                              example: "T1-03"
+                            tape_version:
+                              type: integer
+                              nullable: true
+                              description: version ของเทป (เฉพาะ lecture_tape)
+                              example: 2
                             title:
                               type: string
                               example: "บทที่ 3: วิธีการนั่งสมาธิเบื้องต้น"

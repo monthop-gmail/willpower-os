@@ -131,6 +131,24 @@ willpower-os/
 | `is_active` | BOOLEAN | เปิด/ปิดสาขา |
 | `created_at` | TIMESTAMP | วันที่สร้าง |
 
+#### ตาราง `lecture_tapes`
+| Column | Type | Description |
+|---|---|---|
+| `id` | UUID (PK) | รหัสเทป |
+| `book_number` | INTEGER | เล่มที่ (1-3) |
+| `chapter_number` | INTEGER | บทที่ |
+| `tape_code` | VARCHAR | รหัสม้วนเทป เช่น "T1-01" |
+| `title` | VARCHAR | ชื่อเทป/หัวข้อบรรยาย |
+| `version` | INTEGER | version (1 = ต้นฉบับ, 2+ = ปรับปรุง) |
+| `is_latest` | BOOLEAN | เป็น version ล่าสุดหรือไม่ |
+| `transcription` | TEXT | เนื้อหาถอดเสียง |
+| `duration_seconds` | INTEGER | ความยาวเทป (วินาที) |
+| `recorded_date` | DATE | วันที่บรรยาย |
+| `lecturer` | VARCHAR | ผู้บรรยาย |
+| `notes` | TEXT | หมายเหตุการปรับปรุง |
+
+> **หมายเหตุ:** 1 บท = 1 ม้วนหลัก แต่อาจมีหลาย version (ปรับปรุง) — version เก่าเก็บไว้อ้างอิง
+
 ### 3.4 API Standard
 
 ทุก API ต้องสื่อสารผ่าน JSON format ตาม Spec ที่กำหนด:
@@ -220,6 +238,7 @@ POST /api/v1/ai/feedback           → ส่ง Feedback (👍/👎)
 | ตำราหลักสูตรสมาธิ เล่ม 1 | ✅ อนุญาต |
 | ตำราหลักสูตรสมาธิ เล่ม 2 | ✅ อนุญาต |
 | ตำราหลักสูตรสมาธิ เล่ม 3 | ✅ อนุญาต |
+| เทปบรรยายประจำบท (Lecture Tapes) | ✅ อนุญาต — ใช้ version ล่าสุดเป็นหลัก, version เก่าใช้เสริมได้ (ระบุ version กำกับ) |
 | หนังสือ/บทความ ภายนอกสถาบัน | ❌ ห้ามใช้ |
 | ความรู้ทั่วไปของ AI Model | ❌ ห้ามใช้ตอบเรื่องธรรมะ |
 | ข้อมูลประชาสัมพันธ์สถาบัน | ✅ อนุญาต (สำหรับข้อมูลทั่วไป) |
