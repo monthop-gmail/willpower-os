@@ -287,7 +287,7 @@ POST /api/v1/ai/feedback           → ส่ง Feedback (👍/👎)
 
 | ปี | ระยะ | เป้าหมายหลัก |
 |---|---|---|
-| **ปีที่ 1 (2026)** | Foundation | Willpower ID, Meditation Tracker, AI RAG MVP |
+| **ปีที่ 1 (2026)** | Foundation | Willpower ID, Meditation Tracker, AI RAG MVP (หัวข้อหลักจากเล่ม 1-3 + เทปบรรยาย) |
 | **ปีที่ 2 (2027)** | Scaling | Multi-language, Branch Management, Gamification |
 | **ปีที่ 3 (2028)** | Global | Global Platform, Video Indexing, Executive Dashboard |
 

@@ -77,7 +77,7 @@
 | ไตรมาส | เป้าหมาย |
 |---|---|
 | Q1-Q2 | Willpower ID + Meditation Tracker MVP |
-| Q3 | AI RAG Engine MVP (ตำราเล่ม 1) |
+| Q3 | AI RAG Engine MVP (คัดหัวข้อหลักจากตำราเล่ม 1-3 + เทปบรรยาย) |
 | Q4 | เปิดใช้งานจริงกับสาขานำร่อง 5 สาขา |
 
 ### ปีที่ 2 (2027) — Scaling
