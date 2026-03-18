@@ -95,6 +95,88 @@ CREATE TABLE ai_feedback (
 );
 
 -- =====================================================
+-- Table: courses (หลักสูตร)
+-- เช่น ชินสาสมาธิ #1, ชินสาสมาธิ #2, ครูสมาธิ, วิทันตสาสมาธิ
+-- =====================================================
+
+CREATE TABLE courses (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code            VARCHAR(50) UNIQUE NOT NULL,     -- รหัสหลักสูตร เช่น "CHIN1", "CHIN2", "KRU", "WITAN"
+    name            VARCHAR(255) NOT NULL,            -- ชื่อหลักสูตร
+    description     TEXT,                             -- คำอธิบายหลักสูตร
+    target_audience VARCHAR(255),                     -- กลุ่มเป้าหมาย เช่น "ผู้เริ่มต้น", "ครูสมาธิ"
+    total_hours     INTEGER,                          -- จำนวนชั่วโมงเรียนโดยประมาณ
+    is_active       BOOLEAN DEFAULT true,
+    sort_order      INTEGER DEFAULT 0,                -- ลำดับการแสดงผล
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER trigger_courses_updated_at
+    BEFORE UPDATE ON courses
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- =====================================================
+-- Table: course_chapters (mapping บทเรียน → หลักสูตร)
+-- หลักสูตรหนึ่งเลือกบทจากตำราเล่ม 1-3 มาประกอบ
+-- =====================================================
+
+CREATE TABLE course_chapters (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    course_id       UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    book_number     INTEGER NOT NULL CHECK (book_number BETWEEN 1 AND 3),
+    chapter_number  INTEGER NOT NULL,
+    sort_order      INTEGER NOT NULL,                 -- ลำดับการสอนในหลักสูตรนี้
+    is_required     BOOLEAN DEFAULT true,             -- บทบังคับ หรือ บทเสริม
+    notes           TEXT,                             -- หมายเหตุสำหรับหลักสูตรนี้
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    UNIQUE(course_id, book_number, chapter_number)    -- ป้องกันซ้ำ
+);
+
+CREATE INDEX idx_course_chapters_course ON course_chapters(course_id);
+CREATE INDEX idx_course_chapters_sort ON course_chapters(course_id, sort_order);
+
+-- =====================================================
+-- Table: teaching_materials (ชุดสื่อการสอน)
+-- แต่ละหลักสูตรมีชุดสื่อของตัวเอง สำหรับอาจารย์ผู้บรรยาย
+-- =====================================================
+
+CREATE TYPE material_type AS ENUM (
+    'slide',            -- สไลด์บรรยาย
+    'handout',          -- เอกสารประกอบ
+    'video',            -- วิดีโอสาธิต
+    'audio',            -- เสียงประกอบ
+    'guide',            -- คู่มืออาจารย์
+    'exercise',         -- แบบฝึกหัด/กิจกรรม
+    'other'             -- อื่นๆ
+);
+
+CREATE TABLE teaching_materials (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    course_id       UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    course_chapter_id UUID REFERENCES course_chapters(id) ON DELETE SET NULL,  -- ผูกกับบทเฉพาะ (optional, null = สื่อทั่วไปของหลักสูตร)
+    type            material_type NOT NULL,
+    title           VARCHAR(500) NOT NULL,
+    description     TEXT,
+    file_url        TEXT,                             -- URL ไฟล์ใน Storage
+    file_size_bytes BIGINT,                           -- ขนาดไฟล์
+    version         INTEGER NOT NULL DEFAULT 1,
+    is_latest       BOOLEAN DEFAULT true,
+    uploaded_by     UUID REFERENCES users(id),        -- ผู้อัปโหลด
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_teaching_materials_course ON teaching_materials(course_id);
+CREATE INDEX idx_teaching_materials_chapter ON teaching_materials(course_chapter_id);
+CREATE INDEX idx_teaching_materials_type ON teaching_materials(course_id, type);
+
+CREATE TRIGGER trigger_teaching_materials_updated_at
+    BEFORE UPDATE ON teaching_materials
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- =====================================================
 -- Indexes (สำหรับ Performance)
 -- =====================================================
 
@@ -286,3 +368,13 @@ INSERT INTO branches (name, region, address) VALUES
     ('สาขา เชียงใหม่', 'ภาคเหนือ', 'จ.เชียงใหม่'),
     ('สาขา ขอนแก่น', 'ภาคอีสาน', 'จ.ขอนแก่น'),
     ('สาขา สงขลา', 'ภาคใต้', 'จ.สงขลา');
+
+-- =====================================================
+-- Seed Data: ตัวอย่างหลักสูตร
+-- =====================================================
+
+INSERT INTO courses (code, name, description, target_audience, sort_order) VALUES
+    ('CHIN1', 'ชินสาสมาธิ ระดับ 1', 'หลักสูตรสมาธิเบื้องต้น คัดเลือก 10 บทจากตำรา', 'ผู้เริ่มต้นปฏิบัติสมาธิ', 1),
+    ('CHIN2', 'ชินสาสมาธิ ระดับ 2', 'หลักสูตรสมาธิระดับกลาง คัดเลือก 5 บทเพิ่มเติม', 'ผู้ผ่านชินสาสมาธิ ระดับ 1', 2),
+    ('KRU', 'ครูสมาธิ', 'หลักสูตรครูสมาธิเต็มรูปแบบ ครอบคลุมตำราเล่ม 1-3 พร้อมชุดสื่อการสอน', 'ผู้ต้องการเป็นครูสมาธิ', 3),
+    ('WITAN', 'วิทันตสาสมาธิ', 'หลักสูตรวิทันตสาสมาธิ ครอบคลุมเล่ม 1-3 พร้อมชุดสื่อบรรยายเฉพาะ', 'ผู้ต้องการศึกษาเชิงลึก', 4);

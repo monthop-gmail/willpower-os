@@ -149,6 +149,44 @@ willpower-os/
 
 > **หมายเหตุ:** 1 บท = 1 ม้วนหลัก แต่อาจมีหลาย version (ปรับปรุง) — version เก่าเก็บไว้อ้างอิง
 
+#### ตาราง `courses`
+| Column | Type | Description |
+|---|---|---|
+| `id` | UUID (PK) | รหัสหลักสูตร |
+| `code` | VARCHAR (UNIQUE) | รหัสย่อ เช่น "CHIN1", "KRU", "WITAN" |
+| `name` | VARCHAR | ชื่อหลักสูตร |
+| `description` | TEXT | คำอธิบาย |
+| `target_audience` | VARCHAR | กลุ่มเป้าหมาย |
+| `total_hours` | INTEGER | ชั่วโมงเรียนโดยประมาณ |
+| `sort_order` | INTEGER | ลำดับการแสดงผล |
+
+> **หลักสูตรที่มี:** ชินสาสมาธิ #1 (10 บท), ชินสาสมาธิ #2 (5 บท), ครูสมาธิ (เล่ม 1-3 เต็ม), วิทันตสาสมาธิ (เล่ม 1-3 + สื่อบรรยายเฉพาะ)
+
+#### ตาราง `course_chapters`
+| Column | Type | Description |
+|---|---|---|
+| `id` | UUID (PK) | รหัส |
+| `course_id` | UUID (FK) | หลักสูตร |
+| `book_number` | INTEGER | เล่มที่ (1-3) |
+| `chapter_number` | INTEGER | บทที่ |
+| `sort_order` | INTEGER | ลำดับการสอนในหลักสูตรนี้ |
+| `is_required` | BOOLEAN | บทบังคับ หรือ บทเสริม |
+
+#### ตาราง `teaching_materials`
+| Column | Type | Description |
+|---|---|---|
+| `id` | UUID (PK) | รหัสสื่อ |
+| `course_id` | UUID (FK) | หลักสูตร |
+| `course_chapter_id` | UUID (FK, nullable) | ผูกกับบทเฉพาะ (null = สื่อทั่วไปของหลักสูตร) |
+| `type` | ENUM | ประเภท: `slide`, `handout`, `video`, `audio`, `guide`, `exercise`, `other` |
+| `title` | VARCHAR | ชื่อสื่อ |
+| `file_url` | TEXT | URL ไฟล์ |
+| `version` | INTEGER | version ของสื่อ |
+| `is_latest` | BOOLEAN | เป็น version ล่าสุดหรือไม่ |
+| `uploaded_by` | UUID (FK) | ผู้อัปโหลด |
+
+> **หมายเหตุ:** แต่ละหลักสูตรมีชุดสื่อการสอนของตัวเอง — ครูสมาธิ vs วิทันตสาสมาธิ ใช้ตำราเดียวกันแต่ชุดสื่อบรรยายต่างกัน
+
 ### 3.4 API Standard
 
 ทุก API ต้องสื่อสารผ่าน JSON format ตาม Spec ที่กำหนด:
